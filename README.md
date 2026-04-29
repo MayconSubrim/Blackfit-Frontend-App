@@ -95,3 +95,33 @@ A interface esta navegavel e usa dados mockados nas telas principais. A camada d
 ## Objetivo do Projeto
 
 Sistema academico para gestao de academia, com foco na interface de alunos, instrutores e recepcao, permitindo login, visualizacao de treinos, check-in, ranking, avaliacoes e gerenciamento basico de treinos.
+
+
+proximos passos : 
+
+- [x] Configurar URL base da API
+- [x] Criar serviço HTTP com Axios ou Fetch
+- [x] Criar integração da rota de login
+- [x] Salvar token JWT no localStorage
+- [ ] Criar controle de autenticação no frontend
+- [ ] Criar rotas protegidas
+- [ ] Buscar dados reais do usuário logado
+- [ ] Integrar dashboard com dados do backend
+- [ ] Integrar listagem de treinos do aluno
+- [ ] Integrar detalhes do treino
+- [ ] Integrar início/finalização de treino
+- [ ] Integrar cálculo de tempo/calorias
+- [ ] Integrar check-in diário
+- [ ] Integrar ranking de alunos
+- [ ] Integrar avaliação do instrutor
+- [ ] Integrar painel do instrutor
+- [ ] Integrar criação de treinos
+- [ ] Integrar atribuição de treinos para alunos
+- [ ] Tratar erros da API
+- [ ] Criar feedbacks visuais de carregamento
+- [ ] Criar mensagens de sucesso e erro
+- [ ] Ajustar permissões por perfil: aluno, instrutor e recepcionista
+- [ ] Testar fluxo completo com backend rodando
+- [ ] Ajustar responsividade das telas
+- [ ] Fazer deploy do frontend
+- [ ] Configurar variável de ambiente da API no deploy

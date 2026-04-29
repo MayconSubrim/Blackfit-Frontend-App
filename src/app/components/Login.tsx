@@ -5,6 +5,8 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
+import { ApiError } from '../../services/api';
+import { getDefaultRouteByRole, login } from '../../services/auth';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
 
 export function Login() {
@@ -13,16 +15,34 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - navigate to dashboard
-    navigate('/dashboard');
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      // autentica no backend e salva token no localStorage
+      const response = await login({ email, password });
+
+      // redireciona conforme perfil retornado pela API
+      navigate(getDefaultRouteByRole(response.user.role));
+    } catch (error) {
+      // exibe mensagem enviada pela API quando existir
+      if (error instanceof ApiError) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage('Nao foi possivel entrar. Tente novamente.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInstructorLogin = () => {
-    // Navigate to instructor panel
-    navigate('/instructor');
+    setErrorMessage('Use as credenciais de instrutor para acessar o painel.');
   };
 
   return (
@@ -54,6 +74,12 @@ export function Login() {
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-6">
+            {errorMessage && (
+              <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {errorMessage}
+              </div>
+            )}
+
             {/* Email Input */}
             <div className="space-y-2">
               <label className="text-sm text-gray-300">Endereço de E-mail</label>
@@ -114,15 +140,17 @@ export function Login() {
             {/* Login Button */}
             <Button
               type="submit"
+              disabled={isLoading}
               className="w-full h-14 bg-[#FFD700] hover:bg-[#FFC700] text-black font-semibold text-lg"
             >
-              Entrar
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
 
             {/* Instructor Login */}
             <Button
               type="button"
               onClick={handleInstructorLogin}
+              disabled={isLoading}
               variant="outline"
               className="w-full h-14 border-[#333333] text-[#FFD700] hover:bg-[#1A1A1A] hover:text-[#FFD700] font-semibold"
             >
