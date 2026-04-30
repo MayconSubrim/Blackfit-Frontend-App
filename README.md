@@ -9,6 +9,7 @@ Interface web do sistema BlackFit, desenvolvida para o PEX.
 - Vite
 - Tailwind CSS
 - React Router
+- Axios
 - Radix UI
 - lucide-react
 - Motion
@@ -100,12 +101,12 @@ Sistema academico para gestao de academia, com foco na interface de alunos, inst
 proximos passos : 
 
 - [x] Configurar URL base da API
-- [x] Criar serviço HTTP com Axios ou Fetch
+- [x] Criar serviço HTTP com Axios
 - [x] Criar integração da rota de login
 - [x] Salvar token JWT no localStorage
-- [ ] Criar controle de autenticação no frontend
-- [ ] Criar rotas protegidas
-- [ ] Buscar dados reais do usuário logado
+- [x] Criar controle de autenticação no frontend
+- [x] Criar rotas protegidas
+- [x] Buscar dados reais do usuário logado
 - [ ] Integrar dashboard com dados do backend
 - [ ] Integrar listagem de treinos do aluno
 - [ ] Integrar detalhes do treino

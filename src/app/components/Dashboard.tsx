@@ -5,20 +5,17 @@ import {
   Calendar,
   Trophy,
   TrendingUp,
-  User,
-  LogOut,
   CheckCircle2,
   Clock,
   Flame,
   Target,
-  Star,
-  Menu,
-  X,
   Printer,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Progress } from './ui/progress';
+import { useAuth } from '../auth/AuthContext';
+import { AppHeader } from './AppHeader';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
 
 interface Workout {
@@ -41,7 +38,9 @@ const mockWorkouts: Workout[] = [
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const userName = user?.name || 'Usuário';
+  const firstName = userName.split(' ')[0];
 
   const stats = [
     { icon: Flame, label: 'Calorias Queimadas', value: '2.847', unit: 'kcal', color: '#FFD700' },
@@ -58,121 +57,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="bg-[#0A0A0A] border-b border-[#333333] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img src={logoImage} alt="BlackFit" className="w-full h-full object-contain" />
-              </div>
-              <span className="text-xl font-bold text-white">BlackFit</span>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-2">
-              <Button
-                onClick={() => navigate('/dashboard')}
-                variant="ghost"
-                className="text-[#FFD700] bg-[#FFD700]/10"
-              >
-                <img src={logoImage} alt="" className="w-4 h-4 mr-2 opacity-70" />
-                Treinos
-              </Button>
-              <Button
-                onClick={() => navigate('/check-in')}
-                variant="ghost"
-                className="text-white hover:text-[#FFD700] hover:bg-[#1A1A1A]"
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Check-in
-              </Button>
-              <Button
-                onClick={() => navigate('/rate-instructor')}
-                variant="ghost"
-                className="text-white hover:text-[#FFD700] hover:bg-[#1A1A1A]"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Avaliar Instrutor
-              </Button>
-            </nav>
-
-            {/* User Menu */}
-            <div className="hidden md:flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-black" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">João Silva</p>
-                  <p className="text-xs text-gray-400">Membro</p>
-                </div>
-              </div>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-[#FFD700]"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden text-white"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </Button>
-          </div>
-
-          {/* Mobile Menu */}
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="md:hidden py-4 space-y-2"
-            >
-              <Button
-                onClick={() => navigate('/dashboard')}
-                variant="ghost"
-                className="w-full justify-start text-[#FFD700]"
-              >
-                <img src={logoImage} alt="" className="w-4 h-4 mr-2 opacity-70" />
-                Treinos
-              </Button>
-              <Button
-                onClick={() => navigate('/check-in')}
-                variant="ghost"
-                className="w-full justify-start text-white hover:text-[#FFD700]"
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Check-in
-              </Button>
-              <Button
-                onClick={() => navigate('/rate-instructor')}
-                variant="ghost"
-                className="w-full justify-start text-white hover:text-[#FFD700]"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Avaliar Instrutor
-              </Button>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                className="w-full justify-start text-gray-400 hover:text-[#FFD700]"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </motion.div>
-          )}
-        </div>
-      </header>
+      <AppHeader activePage="workouts" />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -183,7 +68,7 @@ export function Dashboard() {
           className="mb-8"
         >
           <h1 className="text-4xl font-bold text-white mb-2">
-            Bem-vindo de volta, <span className="text-[#FFD700]">João!</span>
+            Bem-vindo de volta, <span className="text-[#FFD700]">{firstName}!</span>
           </h1>
           <p className="text-gray-400">Pronto para arrasar no treino hoje?</p>
         </motion.div>

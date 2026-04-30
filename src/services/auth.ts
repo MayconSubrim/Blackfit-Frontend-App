@@ -14,12 +14,12 @@ export type AuthUser = {
   updatedAt?: string;
 };
 
-type LoginCredentials = {
+export type LoginCredentials = {
   email: string;
   password: string;
 };
 
-type LoginResponse = {
+export type LoginResponse = {
   token: string;
   user: AuthUser;
 };
@@ -41,6 +41,11 @@ export function logout() {
   localStorage.removeItem(AUTH_USER_KEY);
 }
 
+export function getStoredToken() {
+  // recupera token JWT salvo no login
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
 export function getStoredUser() {
   // recupera usuario salvo no login
   const rawUser = localStorage.getItem(AUTH_USER_KEY);
@@ -58,6 +63,15 @@ export function getStoredUser() {
   }
 }
 
+export async function getCurrentUser() {
+  // busca usuario logado usando o token JWT
+  const user = await api.get<AuthUser>('/auth/me');
+
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+
+  return user;
+}
+
 export function getDefaultRouteByRole(role: UserRole) {
   // instrutores entram direto no painel de instrutor
   if (role === 'INSTRUTOR') {
@@ -66,4 +80,16 @@ export function getDefaultRouteByRole(role: UserRole) {
 
   // alunos e recepcionistas seguem para o dashboard por enquanto
   return '/dashboard';
+}
+
+export function getRoleLabel(role?: UserRole) {
+  if (role === 'INSTRUTOR') {
+    return 'Instrutor';
+  }
+
+  if (role === 'RECEPCIONISTA') {
+    return 'Recepcionista';
+  }
+
+  return 'Membro';
 }

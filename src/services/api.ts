@@ -1,15 +1,13 @@
 /// <reference types="vite/client" />
 
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+
 const DEFAULT_API_URL = 'http://localhost:3000';
 export const AUTH_TOKEN_KEY = 'blackfit:auth-token';
 
 // URL base da API configurada no .env
 export const API_URL =
   (import.meta.env.API_URL as string | undefined)?.replace(/\/$/, '') || DEFAULT_API_URL;
-
-type RequestOptions = Omit<RequestInit, 'body'> & {
-  body?: unknown;
-};
 
 export class ApiError extends Error {
   status: number;
@@ -36,71 +34,55 @@ function getErrorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
-async function parseResponse(response: Response) {
-  const contentType = response.headers.get('content-type');
+function normalizeApiError(error: unknown): ApiError {
+  // converte erro do Axios para erro padronizado da aplicacao
+  if (error instanceof AxiosError) {
+    const status = error.response?.status || 0;
+    const data = error.response?.data;
+    const message = getErrorMessage(data, error.message || 'Erro na requisicao');
 
-  // resposta sem conteudo
-  if (response.status === 204) {
-    return null;
+    return new ApiError(message, status, data);
   }
 
-  // tenta converter JSON quando a API sinaliza esse formato
-  if (contentType?.includes('application/json')) {
-    return response.json();
-  }
-
-  return response.text();
+  return new ApiError('Erro inesperado na requisicao', 0, null);
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const headers = new Headers(options.headers);
+export const http = axios.create({
+  baseURL: API_URL,
+  headers: {
+    Accept: 'application/json',
+  },
+});
+
+http.interceptors.request.use((config) => {
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
 
-  // define cabecalho padrao para receber JSON
-  if (!headers.has('Accept')) {
-    headers.set('Accept', 'application/json');
-  }
-
-  // define JSON automaticamente quando existe corpo na requisicao
-  if (options.body !== undefined && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
-
   // envia token JWT nas rotas protegidas
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // executa requisicao para a API
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+  return config;
+});
 
-  const data = await parseResponse(response);
-
-  // padroniza erros para a aplicacao tratar na tela
-  if (!response.ok) {
-    throw new ApiError(
-      getErrorMessage(data, response.statusText || 'Erro na requisicao'),
-      response.status,
-      data
-    );
+async function request<T>(callback: () => Promise<{ data: T }>) {
+  try {
+    const response = await callback();
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
   }
-
-  return data as T;
 }
 
 export const api = {
-  get: <T>(path: string, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'GET' }),
-  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'POST', body }),
-  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'PUT', body }),
-  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'PATCH', body }),
-  delete: <T>(path: string, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'DELETE' }),
+  get: <T>(path: string, config?: AxiosRequestConfig) =>
+    request<T>(() => http.get<T>(path, config)),
+  post: <T>(path: string, body?: unknown, config?: AxiosRequestConfig) =>
+    request<T>(() => http.post<T>(path, body, config)),
+  put: <T>(path: string, body?: unknown, config?: AxiosRequestConfig) =>
+    request<T>(() => http.put<T>(path, body, config)),
+  patch: <T>(path: string, body?: unknown, config?: AxiosRequestConfig) =>
+    request<T>(() => http.patch<T>(path, body, config)),
+  delete: <T>(path: string, config?: AxiosRequestConfig) =>
+    request<T>(() => http.delete<T>(path, config)),
 };

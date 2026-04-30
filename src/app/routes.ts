@@ -5,6 +5,7 @@ import { CheckIn } from "./components/CheckIn";
 import { InstructorRating } from "./components/InstructorRating";
 import { InstructorPanel } from "./components/InstructorPanel";
 import { WorkoutDetail } from "./components/WorkoutDetail";
+import { createProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -13,22 +14,22 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    Component: Dashboard,
+    Component: createProtectedRoute(Dashboard),
   },
   {
     path: "/workout/:id",
-    Component: WorkoutDetail,
+    Component: createProtectedRoute(WorkoutDetail, ['ALUNO']),
   },
   {
     path: "/check-in",
-    Component: CheckIn,
+    Component: createProtectedRoute(CheckIn, ['ALUNO']),
   },
   {
     path: "/rate-instructor",
-    Component: InstructorRating,
+    Component: createProtectedRoute(InstructorRating, ['ALUNO']),
   },
   {
     path: "/instructor",
-    Component: InstructorPanel,
+    Component: createProtectedRoute(InstructorPanel, ['INSTRUTOR']),
   },
 ]);

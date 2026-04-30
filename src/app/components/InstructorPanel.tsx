@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import {
   Plus,
@@ -8,12 +7,8 @@ import {
   Edit,
   Trash2,
   Save,
-  X,
-  User,
-  LogOut,
   Star,
   TrendingUp,
-  CheckCircle2,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -22,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { toast } from 'sonner';
 import { Toaster } from './ui/sonner';
+import { AppHeader } from './AppHeader';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
 
 interface Exercise {
@@ -68,7 +64,6 @@ const exerciseLibrary = [
 ];
 
 export function InstructorPanel() {
-  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([
     {
       id: 1,
@@ -165,44 +160,7 @@ export function InstructorPanel() {
     <div className="min-h-screen bg-black">
       <Toaster position="top-center" theme="dark" />
 
-      {/* Header */}
-      <header className="bg-[#0A0A0A] border-b border-[#333333] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img src={logoImage} alt="BlackFit" className="w-full h-full object-contain" />
-              </div>
-              <div>
-                <span className="text-xl font-bold text-white">BlackFit</span>
-                <span className="ml-2 text-xs bg-[#FFD700] text-black px-2 py-1 rounded font-semibold">
-                  INSTRUTOR
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-black" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">Coach Sarah</p>
-                  <p className="text-xs text-gray-400">Instrutor</p>
-                </div>
-              </div>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-[#FFD700]"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader instructorMode />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

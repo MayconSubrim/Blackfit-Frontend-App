@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -6,17 +6,26 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
 import { ApiError } from '../../services/api';
-import { getDefaultRouteByRole, login } from '../../services/auth';
+import { getDefaultRouteByRole } from '../../services/auth';
+import { useAuth } from '../auth/AuthContext';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
 
 export function Login() {
   const navigate = useNavigate();
+  const { isAuthenticated, signIn, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    // redireciona usuario que ja possui sessao ativa
+    if (isAuthenticated && user) {
+      navigate(getDefaultRouteByRole(user.role), { replace: true });
+    }
+  }, [isAuthenticated, navigate, user]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +34,7 @@ export function Login() {
 
     try {
       // autentica no backend e salva token no localStorage
-      const response = await login({ email, password });
+      const response = await signIn({ email, password });
 
       // redireciona conforme perfil retornado pela API
       navigate(getDefaultRouteByRole(response.user.role));

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import {
   CheckCircle2,
@@ -8,16 +7,12 @@ import {
   Award,
   Calendar,
   TrendingUp,
-  User,
-  LogOut,
-  Star,
-  Menu,
-  X,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import confetti from 'canvas-confetti';
-import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
+import { useAuth } from '../auth/AuthContext';
+import { AppHeader } from './AppHeader';
 
 interface LeaderboardUser {
   rank: number;
@@ -39,10 +34,10 @@ const mockLeaderboard: LeaderboardUser[] = [
 ];
 
 export function CheckIn() {
-  const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { user: authUser } = useAuth();
   const [checkedIn, setCheckedIn] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(14);
+  const userName = authUser?.name || 'Usuário';
 
   const handleCheckIn = () => {
     setCheckedIn(true);
@@ -85,116 +80,7 @@ export function CheckIn() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="bg-[#0A0A0A] border-b border-[#333333] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <img src={logoImage} alt="BlackFit" className="w-full h-full object-contain" />
-              </div>
-              <span className="text-xl font-bold text-white">BlackFit</span>
-            </div>
-
-            <nav className="hidden md:flex items-center gap-2">
-              <Button
-                onClick={() => navigate('/dashboard')}
-                variant="ghost"
-                className="text-white hover:text-[#FFD700] hover:bg-[#1A1A1A]"
-              >
-                <img src={logoImage} alt="" className="w-4 h-4 mr-2 opacity-70" />
-                Treinos
-              </Button>
-              <Button
-                onClick={() => navigate('/check-in')}
-                variant="ghost"
-                className="text-[#FFD700] bg-[#FFD700]/10"
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Check-in
-              </Button>
-              <Button
-                onClick={() => navigate('/rate-instructor')}
-                variant="ghost"
-                className="text-white hover:text-[#FFD700] hover:bg-[#1A1A1A]"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Avaliar Instrutor
-              </Button>
-            </nav>
-
-            <div className="hidden md:flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FFD700] rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-black" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">João Silva</p>
-                  <p className="text-xs text-gray-400">Membro</p>
-                </div>
-              </div>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-[#FFD700]"
-              >
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden text-white"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </Button>
-          </div>
-
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="md:hidden py-4 space-y-2"
-            >
-              <Button
-                onClick={() => navigate('/dashboard')}
-                variant="ghost"
-                className="w-full justify-start text-white hover:text-[#FFD700]"
-              >
-                <img src={logoImage} alt="" className="w-4 h-4 mr-2 opacity-70" />
-                Treinos
-              </Button>
-              <Button
-                onClick={() => navigate('/check-in')}
-                variant="ghost"
-                className="w-full justify-start text-[#FFD700]"
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Check-in
-              </Button>
-              <Button
-                onClick={() => navigate('/rate-instructor')}
-                variant="ghost"
-                className="w-full justify-start text-white hover:text-[#FFD700]"
-              >
-                <Star className="w-4 h-4 mr-2" />
-                Avaliar Instrutor
-              </Button>
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                className="w-full justify-start text-gray-400 hover:text-[#FFD700]"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </motion.div>
-          )}
-        </div>
-      </header>
+      <AppHeader activePage="check-in" />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -297,7 +183,7 @@ export function CheckIn() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                      user.name === 'João Silva'
+                      user.name === userName
                         ? 'bg-[#FFD700]/10 border-2 border-[#FFD700]'
                         : 'bg-[#1A1A1A] hover:bg-[#262626]'
                     }`}
