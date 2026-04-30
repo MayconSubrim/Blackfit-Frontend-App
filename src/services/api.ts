@@ -86,3 +86,55 @@ export const api = {
   delete: <T>(path: string, config?: AxiosRequestConfig) =>
     request<T>(() => http.delete<T>(path, config)),
 };
+
+export type UserItem = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ALUNO' | 'INSTRUTOR' | 'RECEPCIONISTA';
+  instructorId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type CreateInstructorPayload = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+type CreateStudentPayload = CreateInstructorPayload & {
+  instructorId: string;
+};
+
+type UpdateUserPayload = {
+  name: string;
+  email: string;
+  password?: string;
+  instructorId?: string;
+};
+
+export function getUsers() {
+  // listar usuarios para a recepcao
+  return api.get<UserItem[]>('/users');
+}
+
+export function createInstructor(payload: CreateInstructorPayload) {
+  // criar instrutor pelo fluxo da recepcao
+  return api.post<UserItem>('/users/create-instructor', payload);
+}
+
+export function createStudent(payload: CreateStudentPayload) {
+  // criar aluno vinculado a um instrutor
+  return api.post<UserItem>('/users/create-student', payload);
+}
+
+export function updateUserById(id: string, payload: UpdateUserPayload) {
+  // editar dados basicos de um usuario
+  return api.patch<UserItem>(`/users/${id}`, payload);
+}
+
+export function assignStudentToInstructor(studentId: string, instructorId: string) {
+  // atualizar instrutor responsavel pelo aluno
+  return api.patch<UserItem>(`/users/${studentId}/instructor`, { instructorId });
+}

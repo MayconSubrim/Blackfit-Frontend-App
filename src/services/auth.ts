@@ -78,7 +78,11 @@ export function getDefaultRouteByRole(role: UserRole) {
     return '/instructor';
   }
 
-  // alunos e recepcionistas seguem para o dashboard por enquanto
+  if (role === 'RECEPCIONISTA') {
+    return '/reception';
+  }
+
+  // alunos seguem para o dashboard
   return '/dashboard';
 }
 

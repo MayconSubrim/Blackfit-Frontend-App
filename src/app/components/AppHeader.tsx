@@ -13,6 +13,7 @@ type AppHeaderProps = {
   activePage?: ActivePage;
   showBackButton?: boolean;
   instructorMode?: boolean;
+  receptionMode?: boolean;
   noPrint?: boolean;
 };
 
@@ -20,6 +21,7 @@ export function AppHeader({
   activePage,
   showBackButton = false,
   instructorMode = false,
+  receptionMode = false,
   noPrint = false,
 }: AppHeaderProps) {
   const navigate = useNavigate();
@@ -97,10 +99,17 @@ export function AppHeader({
                   INSTRUTOR
                 </span>
               )}
+              {receptionMode && (
+                <span className="ml-2 text-xs bg-[#FFD700] text-black px-2 py-1 rounded font-semibold">
+                  RECEPCAO
+                </span>
+              )}
             </div>
           </div>
 
-          {!instructorMode && <nav className="hidden md:flex items-center gap-2">{studentNav}</nav>}
+          {!instructorMode && !receptionMode && (
+            <nav className="hidden md:flex items-center gap-2">{studentNav}</nav>
+          )}
 
           <div className="hidden md:flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -122,7 +131,7 @@ export function AppHeader({
             </Button>
           </div>
 
-          {!instructorMode && (
+          {!instructorMode && !receptionMode && (
             <Button
               variant="ghost"
               size="icon"
@@ -133,7 +142,7 @@ export function AppHeader({
             </Button>
           )}
 
-          {instructorMode && (
+          {(instructorMode || receptionMode) && (
             <Button
               onClick={handleLogout}
               variant="ghost"
@@ -145,7 +154,7 @@ export function AppHeader({
           )}
         </div>
 
-        {!instructorMode && menuOpen && (
+        {!instructorMode && !receptionMode && menuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

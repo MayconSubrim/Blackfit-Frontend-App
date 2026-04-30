@@ -4,6 +4,7 @@ import { Dashboard } from "./components/Dashboard";
 import { CheckIn } from "./components/CheckIn";
 import { InstructorRating } from "./components/InstructorRating";
 import { InstructorPanel } from "./components/InstructorPanel";
+import { ReceptionPanel } from "./components/ReceptionPanel";
 import { WorkoutDetail } from "./components/WorkoutDetail";
 import { createProtectedRoute } from "./components/ProtectedRoute";
 
@@ -31,5 +32,9 @@ export const router = createBrowserRouter([
   {
     path: "/instructor",
     Component: createProtectedRoute(InstructorPanel, ['INSTRUTOR']),
+  },
+  {
+    path: "/reception",
+    Component: createProtectedRoute(ReceptionPanel, ['RECEPCIONISTA']),
   },
 ]);
