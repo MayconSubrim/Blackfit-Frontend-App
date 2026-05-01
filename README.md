@@ -109,7 +109,7 @@ proximos passos :
 - [x] Buscar dados reais do usuário logado
 - [x] Criar component para recpção e integrar com back-end
 - [x] Integrar dashboard com dados do backend
-- [ ] Integrar listagem de treinos do aluno
+- [x] Integrar listagem de treinos do aluno
 - [ ] Integrar detalhes do treino
 - [ ] Integrar início/finalização de treino
 - [ ] Integrar cálculo de tempo/calorias

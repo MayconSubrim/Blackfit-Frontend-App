@@ -24,12 +24,18 @@ import {
   getDifficultyClasses,
   getStudentDashboard,
 } from '../../services/dashboard';
+import {
+  getStudentWorkouts,
+  getWorkoutErrorMessage,
+  StudentWorkout,
+} from '../../services/workouts';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [workouts, setWorkouts] = useState<StudentWorkout[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const userName = user?.name || 'Usuario';
@@ -39,10 +45,15 @@ export function Dashboard() {
     try {
       setLoading(true);
       setErrorMessage('');
-      const data = await getStudentDashboard();
+      const [data, workoutsData] = await Promise.all([
+        getStudentDashboard(),
+        getStudentWorkouts(),
+      ]);
       setDashboard(data);
+      setWorkouts(workoutsData);
     } catch (error) {
-      setErrorMessage(getDashboardErrorMessage(error, 'Erro ao carregar dashboard'));
+      const fallback = getDashboardErrorMessage(error, 'Erro ao carregar dashboard');
+      setErrorMessage(getWorkoutErrorMessage(error, fallback));
     } finally {
       setLoading(false);
     }
@@ -93,7 +104,6 @@ export function Dashboard() {
     total: 1,
     percentage: 0,
   };
-  const workouts = dashboard?.workouts ?? [];
 
   return (
     <div className="min-h-screen bg-black">
