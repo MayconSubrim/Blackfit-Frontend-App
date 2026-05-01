@@ -116,9 +116,9 @@ proximos passos :
 - [ ] Integrar check-in diário
 - [ ] Integrar ranking de alunos
 - [ ] Integrar avaliação do instrutor
-- [ ] Integrar painel do instrutor
-- [ ] Integrar criação de treinos
-- [ ] Integrar atribuição de treinos para alunos
+- [x] Integrar painel do instrutor
+- [x] Integrar criação de treinos
+- [x] Integrar atribuição de treinos para alunos
 - [ ] Tratar erros da API
 - [ ] Criar feedbacks visuais de carregamento
 - [ ] Criar mensagens de sucesso e erro
