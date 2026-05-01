@@ -1,67 +1,105 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import {
   Calendar,
-  Trophy,
-  TrendingUp,
   CheckCircle2,
   Clock,
   Flame,
-  Target,
   Printer,
+  RefreshCw,
+  Target,
+  TrendingUp,
+  Trophy,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Progress } from './ui/progress';
 import { useAuth } from '../auth/AuthContext';
 import { AppHeader } from './AppHeader';
+import {
+  DashboardData,
+  formatNumber,
+  getDashboardErrorMessage,
+  getDifficultyClasses,
+  getStudentDashboard,
+} from '../../services/dashboard';
 import logoImage from 'figma:asset/63b7da44e4c6dd410d42a5c31d62c189569f14bd.png';
-
-interface Workout {
-  id: number;
-  name: string;
-  exercises: number;
-  duration: string;
-  difficulty: 'Iniciante' | 'Intermediário' | 'Avançado';
-  completed: boolean;
-  dayOfWeek: string;
-}
-
-const mockWorkouts: Workout[] = [
-  { id: 1, name: 'Força de Membros Superiores', exercises: 8, duration: '45 min', difficulty: 'Intermediário', completed: true, dayOfWeek: 'Segunda' },
-  { id: 2, name: 'Cardio & Core', exercises: 6, duration: '30 min', difficulty: 'Iniciante', completed: true, dayOfWeek: 'Terça' },
-  { id: 3, name: 'Treino de Pernas', exercises: 10, duration: '60 min', difficulty: 'Avançado', completed: false, dayOfWeek: 'Quarta' },
-  { id: 4, name: 'Sessão HIIT', exercises: 5, duration: '25 min', difficulty: 'Intermediário', completed: false, dayOfWeek: 'Quinta' },
-  { id: 5, name: 'Treino Full Body', exercises: 12, duration: '50 min', difficulty: 'Avançado', completed: false, dayOfWeek: 'Sexta' },
-];
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userName = user?.name || 'Usuário';
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const userName = user?.name || 'Usuario';
   const firstName = userName.split(' ')[0];
 
-  const stats = [
-    { icon: Flame, label: 'Calorias Queimadas', value: '2.847', unit: 'kcal', color: '#FFD700' },
-    { icon: Clock, label: 'Tempo de Treino', value: '12,5', unit: 'horas', color: '#FFD700' },
-    { icon: Target, label: 'Metas Atingidas', value: '8', unit: '/ 10', color: '#FFD700' },
-    { icon: Trophy, label: 'Sequência', value: '14', unit: 'dias', color: '#FFD700' },
-  ];
+  async function loadDashboard() {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const data = await getStudentDashboard();
+      setDashboard(data);
+    } catch (error) {
+      setErrorMessage(getDashboardErrorMessage(error, 'Erro ao carregar dashboard'));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const weeklyProgress = {
-    completed: 2,
-    total: 5,
-    percentage: 40,
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const stats = useMemo(() => {
+    const currentStats = dashboard?.stats;
+
+    // monta os cards a partir dos dados reais retornados pelo backend
+    return [
+      {
+        icon: Flame,
+        label: 'Calorias Queimadas',
+        value: formatNumber(currentStats?.caloriesBurned ?? 0),
+        unit: 'kcal',
+        color: '#FFD700',
+      },
+      {
+        icon: Clock,
+        label: 'Treinos Disponiveis',
+        value: formatNumber(currentStats?.assignedWorkoutCount ?? 0),
+        unit: 'fichas',
+        color: '#FFD700',
+      },
+      {
+        icon: Target,
+        label: 'Metas Atingidas',
+        value: formatNumber(currentStats?.goalsCompleted ?? 0),
+        unit: `/ ${formatNumber(currentStats?.goalsTarget ?? 10)}`,
+        color: '#FFD700',
+      },
+      {
+        icon: Trophy,
+        label: 'Sequencia',
+        value: formatNumber(currentStats?.streakDays ?? 0),
+        unit: 'dias',
+        color: '#FFD700',
+      },
+    ];
+  }, [dashboard]);
+
+  const weeklyProgress = dashboard?.weeklyProgress ?? {
+    completed: 0,
+    total: 1,
+    percentage: 0,
   };
+  const workouts = dashboard?.workouts ?? [];
 
   return (
     <div className="min-h-screen bg-black">
       <AppHeader activePage="workouts" />
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -73,23 +111,40 @@ export function Dashboard() {
           <p className="text-gray-400">Pronto para arrasar no treino hoje?</p>
         </motion.div>
 
-        {/* Stats Grid */}
+        {errorMessage && (
+          <Card className="bg-red-500/10 border-red-500/30 p-4 mb-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-red-200">{errorMessage}</p>
+              <Button
+                onClick={loadDashboard}
+                variant="outline"
+                className="border-red-500/40 text-red-100 hover:bg-red-500/10"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Tentar novamente
+              </Button>
+            </div>
+          </Card>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
-          {stats.map((stat, index) => (
+          {stats.map((stat) => (
             <Card
-              key={index}
+              key={stat.label}
               className="bg-[#0A0A0A] border-[#333333] p-6 hover:border-[#FFD700] transition-colors"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-400 mb-2">{stat.label}</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-white">{stat.value}</span>
+                    <span className="text-3xl font-bold text-white">
+                      {loading ? '...' : stat.value}
+                    </span>
                     <span className="text-sm text-gray-400">{stat.unit}</span>
                   </div>
                 </div>
@@ -104,7 +159,6 @@ export function Dashboard() {
           ))}
         </motion.div>
 
-        {/* Weekly Progress */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +172,9 @@ export function Dashboard() {
                 <h2 className="text-xl font-bold text-white">Progresso da Semana</h2>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-[#FFD700]">{weeklyProgress.percentage}%</p>
+                <p className="text-2xl font-bold text-[#FFD700]">
+                  {loading ? '...' : `${weeklyProgress.percentage}%`}
+                </p>
                 <p className="text-sm text-gray-400">
                   {weeklyProgress.completed} de {weeklyProgress.total} treinos
                 </p>
@@ -128,7 +184,6 @@ export function Dashboard() {
           </Card>
         </motion.div>
 
-        {/* Workouts */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -136,14 +191,33 @@ export function Dashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">Seus Treinos</h2>
-            <Button className="bg-[#FFD700] hover:bg-[#FFC700] text-black">
+            <Button
+              onClick={loadDashboard}
+              disabled={loading}
+              className="bg-[#FFD700] hover:bg-[#FFC700] text-black"
+            >
               <TrendingUp className="w-4 h-4 mr-2" />
-              Ver Todos
+              Atualizar
             </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {mockWorkouts.map((workout, index) => (
+            {loading && (
+              <Card className="bg-[#0A0A0A] border-[#333333] p-6 lg:col-span-2">
+                <p className="text-[#FFD700]">Carregando treinos...</p>
+              </Card>
+            )}
+
+            {!loading && workouts.length === 0 && (
+              <Card className="bg-[#0A0A0A] border-[#333333] p-6 lg:col-span-2">
+                <p className="text-white font-semibold">Nenhum treino atribuido ainda.</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Quando seu instrutor atribuir uma ficha, ela aparece aqui automaticamente.
+                </p>
+              </Card>
+            )}
+
+            {workouts.map((workout, index) => (
               <motion.div
                 key={workout.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -168,7 +242,7 @@ export function Dashboard() {
                       <div className="flex items-center gap-4 text-sm text-gray-400">
                         <span className="flex items-center gap-1">
                           <img src={logoImage} alt="" className="w-4 h-4 opacity-70" />
-                          {workout.exercises} exercícios
+                          {workout.exercises} exercicios
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
@@ -177,21 +251,17 @@ export function Dashboard() {
                       </div>
                     </div>
                     <div
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        workout.difficulty === 'Iniciante'
-                          ? 'bg-green-500/20 text-green-400'
-                          : workout.difficulty === 'Intermediário'
-                          ? 'bg-[#FFD700]/20 text-[#FFD700]'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyClasses(
+                        workout.difficulty
+                      )}`}
                     >
                       {workout.difficulty}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         navigate(`/workout/${workout.id}`);
                       }}
                       className={`w-full ${
@@ -203,10 +273,9 @@ export function Dashboard() {
                       {workout.completed ? 'Ver Treino' : 'Iniciar Treino'}
                     </Button>
                     <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={(event) => {
+                        event.stopPropagation();
                         navigate(`/workout/${workout.id}`);
-                        // Trigger print after navigation
                         setTimeout(() => window.print(), 500);
                       }}
                       variant="outline"

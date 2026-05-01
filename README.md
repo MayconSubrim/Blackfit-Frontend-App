@@ -107,8 +107,8 @@ proximos passos :
 - [x] Criar controle de autenticação no frontend
 - [x] Criar rotas protegidas
 - [x] Buscar dados reais do usuário logado
-- [ ] Criar component para recpção e integrar com back-end
-- [ ] Integrar dashboard com dados do backend
+- [x] Criar component para recpção e integrar com back-end
+- [x] Integrar dashboard com dados do backend
 - [ ] Integrar listagem de treinos do aluno
 - [ ] Integrar detalhes do treino
 - [ ] Integrar início/finalização de treino
@@ -119,7 +119,6 @@ proximos passos :
 - [ ] Integrar painel do instrutor
 - [ ] Integrar criação de treinos
 - [ ] Integrar atribuição de treinos para alunos
-- [x] Criar component para recpção e integrar com back-end
 - [ ] Tratar erros da API
 - [ ] Criar feedbacks visuais de carregamento
 - [ ] Criar mensagens de sucesso e erro
