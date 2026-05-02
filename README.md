@@ -110,8 +110,8 @@ proximos passos :
 - [x] Criar component para recpção e integrar com back-end
 - [x] Integrar dashboard com dados do backend
 - [x] Integrar listagem de treinos do aluno
-- [ ] Integrar detalhes do treino
-- [ ] Integrar início/finalização de treino
+- [x] Integrar detalhes do treino
+- [x] Integrar início/finalização de treino
 - [ ] Integrar cálculo de tempo/calorias
 - [ ] Integrar check-in diário
 - [ ] Integrar ranking de alunos
