@@ -1,56 +1,82 @@
-import { useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import {
-  Star,
-  Send,
-  CheckCircle2,
-} from 'lucide-react';
+import { CheckCircle2, Send, Star } from 'lucide-react';
+import { toast } from 'sonner';
+import { AppHeader } from './AppHeader';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Textarea } from './ui/textarea';
-import { toast } from 'sonner';
 import { Toaster } from './ui/sonner';
-import { AppHeader } from './AppHeader';
-
-interface Instructor {
-  id: number;
-  name: string;
-  specialty: string;
-  avatar: string;
-  currentRating: number;
-  totalReviews: number;
-}
-
-const mockInstructors: Instructor[] = [
-  { id: 1, name: 'Coach Sarah', specialty: 'Treino de Força', avatar: 'CS', currentRating: 4.8, totalReviews: 124 },
-  { id: 2, name: 'Coach Mike', specialty: 'HIIT & Cardio', avatar: 'CM', currentRating: 4.9, totalReviews: 156 },
-  { id: 3, name: 'Coach Emma', specialty: 'Yoga & Flexibilidade', avatar: 'CE', currentRating: 4.7, totalReviews: 98 },
-  { id: 4, name: 'Coach David', specialty: 'CrossFit', avatar: 'CD', currentRating: 4.6, totalReviews: 87 },
-];
+import {
+  createInstructorRating,
+  getInitials,
+  getRatingErrorMessage,
+  getRatingInstructors,
+  RatingInstructor,
+} from '../../services/ratings';
 
 export function InstructorRating() {
-  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [instructors, setInstructors] = useState<RatingInstructor[]>([]);
+  const [selectedInstructor, setSelectedInstructor] = useState<RatingInstructor | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  async function loadInstructors() {
+    try {
+      setLoading(true);
+      const data = await getRatingInstructors();
+      setInstructors(data);
+      setSelectedInstructor((current) => {
+        if (!current) return data[0] ?? null;
+        return data.find((instructor) => instructor.id === current.id) ?? data[0] ?? null;
+      });
+    } catch (error) {
+      toast.error(getRatingErrorMessage(error, 'Erro ao carregar instrutores'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadInstructors();
+  }, []);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     if (!selectedInstructor || rating === 0) return;
 
-    setSubmitted(true);
-    toast.success('Obrigado pelo seu feedback!', {
-      description: `Sua avaliação para ${selectedInstructor.name} foi enviada.`,
-    });
+    if (selectedInstructor.myRating) {
+      toast.error('Voce ja avaliou este instrutor');
+      return;
+    }
 
-    // Reset after 2 seconds
-    setTimeout(() => {
-      setSelectedInstructor(null);
-      setRating(0);
-      setComment('');
-      setSubmitted(false);
-    }, 2000);
+    try {
+      setSaving(true);
+      await createInstructorRating({
+        instructorId: selectedInstructor.id,
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      setSubmitted(true);
+      toast.success('Obrigado pelo seu feedback!', {
+        description: `Sua avaliacao para ${selectedInstructor.name} foi enviada.`,
+      });
+      await loadInstructors();
+
+      setTimeout(() => {
+        setRating(0);
+        setComment('');
+        setSubmitted(false);
+      }, 2000);
+    } catch (error) {
+      toast.error(getRatingErrorMessage(error, 'Erro ao enviar avaliacao'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const StarRating = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
@@ -87,10 +113,8 @@ export function InstructorRating() {
   return (
     <div className="min-h-screen bg-black">
       <Toaster position="top-center" theme="dark" />
-      
       <AppHeader activePage="rating" />
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -104,7 +128,6 @@ export function InstructorRating() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Instructors List */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -112,7 +135,21 @@ export function InstructorRating() {
           >
             <h2 className="text-xl font-bold text-white mb-4">Selecione o Instrutor</h2>
             <div className="space-y-3">
-              {mockInstructors.map((instructor, index) => (
+              {loading && (
+                <Card className="bg-[#0A0A0A] border-[#333333] p-4">
+                  <p className="text-[#FFD700]">Carregando instrutores...</p>
+                </Card>
+              )}
+
+              {!loading && instructors.length === 0 && (
+                <Card className="bg-[#0A0A0A] border-[#333333] p-4">
+                  <p className="text-sm text-gray-400">
+                    Nenhum instrutor disponivel para avaliacao.
+                  </p>
+                </Card>
+              )}
+
+              {instructors.map((instructor, index) => (
                 <motion.div
                   key={instructor.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -134,21 +171,26 @@ export function InstructorRating() {
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-12 h-12 bg-[#FFD700] rounded-full flex items-center justify-center font-bold text-black">
-                        {instructor.avatar}
+                        {getInitials(instructor.name)}
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-white">{instructor.name}</h3>
-                        <p className="text-xs text-gray-400">{instructor.specialty}</p>
+                        <p className="text-xs text-gray-400">Instrutor BlackFit</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 fill-[#FFD700] text-[#FFD700]" />
                       <span className="text-sm font-semibold text-white">
-                        {instructor.currentRating}
+                        {instructor.averageRating.toFixed(1)}
                       </span>
                       <span className="text-xs text-gray-400">
-                        ({instructor.totalReviews} avaliações)
+                        ({instructor.totalReviews} avaliacoes)
                       </span>
+                      {instructor.myRating && (
+                        <span className="ml-auto rounded-full bg-[#FFD700]/10 px-2 py-1 text-xs font-semibold text-[#FFD700]">
+                          Avaliado
+                        </span>
+                      )}
                     </div>
                   </Card>
                 </motion.div>
@@ -156,7 +198,6 @@ export function InstructorRating() {
             </div>
           </motion.div>
 
-          {/* Rating Form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -164,7 +205,28 @@ export function InstructorRating() {
           >
             {selectedInstructor ? (
               <Card className="bg-[#0A0A0A] border-[#333333] p-8">
-                {submitted ? (
+                {selectedInstructor.myRating ? (
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-24 h-24 bg-[#FFD700] rounded-full mb-6">
+                      <CheckCircle2 className="w-12 h-12 text-black" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-2">
+                      Avaliacao ja enviada
+                    </h2>
+                    <p className="text-gray-400">
+                      Voce avaliou {selectedInstructor.name} com{' '}
+                      <span className="font-semibold text-[#FFD700]">
+                        {selectedInstructor.myRating} estrela
+                        {selectedInstructor.myRating === 1 ? '' : 's'}
+                      </span>
+                      .
+                    </p>
+                    <p className="mt-3 text-sm text-gray-500">
+                      Para manter o ranking consistente, cada aluno pode avaliar cada instrutor
+                      uma unica vez.
+                    </p>
+                  </div>
+                ) : submitted ? (
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -178,23 +240,23 @@ export function InstructorRating() {
                   </motion.div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Instructor Info */}
                     <div className="flex items-center gap-4 pb-6 border-b border-[#333333]">
                       <div className="w-16 h-16 bg-[#FFD700] rounded-full flex items-center justify-center text-2xl font-bold text-black">
-                        {selectedInstructor.avatar}
+                        {getInitials(selectedInstructor.name)}
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold text-white">
                           {selectedInstructor.name}
                         </h2>
-                        <p className="text-gray-400">{selectedInstructor.specialty}</p>
+                        <p className="text-gray-400">
+                          Media atual: {selectedInstructor.averageRating.toFixed(1)} de 5
+                        </p>
                       </div>
                     </div>
 
-                    {/* Star Rating */}
                     <div>
                       <label className="text-lg font-semibold text-white mb-4 block">
-                        Como você avalia este instrutor?
+                        Como voce avalia este instrutor?
                       </label>
                       <div className="flex flex-col items-center gap-4 p-6 bg-[#1A1A1A] rounded-lg">
                         <StarRating size="lg" />
@@ -210,27 +272,25 @@ export function InstructorRating() {
                       </div>
                     </div>
 
-                    {/* Comment */}
                     <div>
                       <label className="text-lg font-semibold text-white mb-4 block">
-                        Comentários Adicionais (Opcional)
+                        Comentarios adicionais
                       </label>
                       <Textarea
                         value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="Compartilhe sua experiência com este instrutor..."
+                        onChange={(event) => setComment(event.target.value)}
+                        placeholder="Compartilhe sua experiencia com este instrutor..."
                         className="min-h-32 bg-[#1A1A1A] border-[#333333] text-white placeholder:text-gray-500 focus:border-[#FFD700] resize-none"
                       />
                     </div>
 
-                    {/* Submit Button */}
                     <Button
                       type="submit"
-                      disabled={rating === 0}
+                      disabled={rating === 0 || saving}
                       className="w-full h-14 bg-[#FFD700] hover:bg-[#FFC700] text-black font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Send className="w-5 h-5 mr-2" />
-                      Enviar Avaliação
+                      {saving ? 'Enviando...' : 'Enviar Avaliacao'}
                     </Button>
                   </form>
                 )}
@@ -245,7 +305,7 @@ export function InstructorRating() {
                     Selecione um Instrutor
                   </h2>
                   <p className="text-gray-400">
-                    Escolha um instrutor da lista para enviar sua avaliação
+                    Escolha um instrutor da lista para enviar sua avaliacao
                   </p>
                 </div>
               </Card>
