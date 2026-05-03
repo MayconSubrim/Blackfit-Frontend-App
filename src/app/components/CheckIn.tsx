@@ -15,36 +15,20 @@ import { Card } from './ui/card';
 import { useAuth } from '../auth/AuthContext';
 import {
   CheckinStats,
+  LeaderboardUser,
   createDailyCheckin,
   getCheckinErrorMessage,
+  getCheckinRanking,
   getCheckinStats,
   hasLocalCheckinToday,
   markLocalCheckinToday,
 } from '../../services/checkins';
 
-interface LeaderboardUser {
-  rank: number;
-  name: string;
-  checkIns: number;
-  avatar: string;
-  streak: number;
-}
-
-const mockLeaderboard: LeaderboardUser[] = [
-  { rank: 1, name: 'Sarah Johnson', checkIns: 28, avatar: 'SJ', streak: 14 },
-  { rank: 2, name: 'Mike Thompson', checkIns: 26, avatar: 'MT', streak: 12 },
-  { rank: 3, name: 'Emily Davis', checkIns: 24, avatar: 'ED', streak: 10 },
-  { rank: 4, name: 'Joao Silva', checkIns: 22, avatar: 'JS', streak: 14 },
-  { rank: 5, name: 'Alex Rivera', checkIns: 21, avatar: 'AR', streak: 8 },
-  { rank: 6, name: 'Lisa Chen', checkIns: 19, avatar: 'LC', streak: 6 },
-  { rank: 7, name: 'David Park', checkIns: 18, avatar: 'DP', streak: 7 },
-  { rank: 8, name: 'Maria Garcia', checkIns: 17, avatar: 'MG', streak: 5 },
-];
-
 export function CheckIn() {
   const { user: authUser } = useAuth();
   const [checkedIn, setCheckedIn] = useState(() => hasLocalCheckinToday(authUser?.id));
   const [stats, setStats] = useState<CheckinStats | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -54,8 +38,12 @@ export function CheckIn() {
     try {
       setLoading(true);
       setErrorMessage('');
-      const data = await getCheckinStats();
+      const [data, rankingData] = await Promise.all([
+        getCheckinStats(),
+        getCheckinRanking(),
+      ]);
       setStats(data);
+      setLeaderboard(rankingData);
       setCheckedIn(hasLocalCheckinToday(authUser?.id));
     } catch (error) {
       setErrorMessage(getCheckinErrorMessage(error, 'Erro ao carregar check-in'));
@@ -227,14 +215,26 @@ export function CheckIn() {
 
             <Card className="bg-[#0A0A0A] border-[#333333] p-6">
               <div className="space-y-4">
-                {mockLeaderboard.map((user, index) => (
+                {loading && (
+                  <div className="rounded-lg bg-[#1A1A1A] p-4 text-sm text-[#FFD700]">
+                    Carregando ranking...
+                  </div>
+                )}
+
+                {!loading && leaderboard.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-[#333333] p-4 text-sm text-gray-400">
+                    Nenhum check-in registrado ainda.
+                  </div>
+                )}
+
+                {!loading && leaderboard.map((user, index) => (
                   <motion.div
-                    key={user.rank}
+                    key={user.userId}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                      user.name === userName
+                      user.userId === authUser?.id || user.name === userName
                         ? 'bg-[#FFD700]/10 border-2 border-[#FFD700]'
                         : 'bg-[#1A1A1A] hover:bg-[#262626]'
                     }`}
@@ -272,7 +272,7 @@ export function CheckIn() {
 
               <div className="mt-6 p-4 bg-[#FFD700]/10 border border-[#FFD700] rounded-lg">
                 <p className="text-center text-sm text-[#FFD700] font-semibold">
-                  Continue assim! Voce esta a poucos check-ins do top 3.
+                  Continue assim! Cada check-in aproxima voce do topo.
                 </p>
               </div>
             </Card>
