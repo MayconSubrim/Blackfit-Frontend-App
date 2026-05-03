@@ -112,8 +112,8 @@ proximos passos :
 - [x] Integrar listagem de treinos do aluno
 - [x] Integrar detalhes do treino
 - [x] Integrar início/finalização de treino
-- [ ] Integrar cálculo de tempo/calorias
-- [ ] Integrar check-in diário
+- [x] Integrar cálculo de tempo/calorias
+- [x] Integrar check-in diário
 - [ ] Integrar ranking de alunos
 - [ ] Integrar avaliação do instrutor
 - [x] Integrar painel do instrutor

@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  CheckCircle2,
-  Trophy,
-  Medal,
   Award,
   Calendar,
+  CheckCircle2,
+  Medal,
   TrendingUp,
+  Trophy,
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { AppHeader } from './AppHeader';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import confetti from 'canvas-confetti';
 import { useAuth } from '../auth/AuthContext';
-import { AppHeader } from './AppHeader';
+import {
+  CheckinStats,
+  createDailyCheckin,
+  getCheckinErrorMessage,
+  getCheckinStats,
+  hasLocalCheckinToday,
+  markLocalCheckinToday,
+} from '../../services/checkins';
 
 interface LeaderboardUser {
   rank: number;
@@ -26,7 +34,7 @@ const mockLeaderboard: LeaderboardUser[] = [
   { rank: 1, name: 'Sarah Johnson', checkIns: 28, avatar: 'SJ', streak: 14 },
   { rank: 2, name: 'Mike Thompson', checkIns: 26, avatar: 'MT', streak: 12 },
   { rank: 3, name: 'Emily Davis', checkIns: 24, avatar: 'ED', streak: 10 },
-  { rank: 4, name: 'João Silva', checkIns: 22, avatar: 'JS', streak: 14 },
+  { rank: 4, name: 'Joao Silva', checkIns: 22, avatar: 'JS', streak: 14 },
   { rank: 5, name: 'Alex Rivera', checkIns: 21, avatar: 'AR', streak: 8 },
   { rank: 6, name: 'Lisa Chen', checkIns: 19, avatar: 'LC', streak: 6 },
   { rank: 7, name: 'David Park', checkIns: 18, avatar: 'DP', streak: 7 },
@@ -35,21 +43,55 @@ const mockLeaderboard: LeaderboardUser[] = [
 
 export function CheckIn() {
   const { user: authUser } = useAuth();
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [currentStreak, setCurrentStreak] = useState(14);
-  const userName = authUser?.name || 'Usuário';
+  const [checkedIn, setCheckedIn] = useState(() => hasLocalCheckinToday(authUser?.id));
+  const [stats, setStats] = useState<CheckinStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const userName = authUser?.name || 'Usuario';
 
-  const handleCheckIn = () => {
-    setCheckedIn(true);
-    setCurrentStreak(currentStreak + 1);
-    
-    // Trigger confetti
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#FFD700', '#FFA500', '#FFFF00'],
-    });
+  async function loadCheckinStats() {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      const data = await getCheckinStats();
+      setStats(data);
+      setCheckedIn(hasLocalCheckinToday(authUser?.id));
+    } catch (error) {
+      setErrorMessage(getCheckinErrorMessage(error, 'Erro ao carregar check-in'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCheckinStats();
+  }, [authUser?.id]);
+
+  const handleCheckIn = async () => {
+    try {
+      setSaving(true);
+      setErrorMessage('');
+      const response = await createDailyCheckin();
+      setCheckedIn(true);
+      markLocalCheckinToday(authUser?.id);
+      await loadCheckinStats();
+
+      if (response.alreadyCheckedIn) {
+        return;
+      }
+
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FFA500', '#FFFF00'],
+      });
+    } catch (error) {
+      setErrorMessage(getCheckinErrorMessage(error, 'Erro ao fazer check-in'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getRankIcon = (rank: number) => {
@@ -82,20 +124,23 @@ export function CheckIn() {
     <div className="min-h-screen bg-black">
       <AppHeader activePage="check-in" />
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Check-in Section */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
             <h1 className="text-4xl font-bold text-white mb-2">
-              <span className="text-[#FFD700]">Check-in</span> Diário
+              <span className="text-[#FFD700]">Check-in</span> Diario
             </h1>
-            <p className="text-gray-400 mb-8">Marque sua presença e construa sua sequência!</p>
+            <p className="text-gray-400 mb-8">Marque sua presenca e construa sua sequencia!</p>
 
-            {/* Check-in Card */}
+            {errorMessage && (
+              <Card className="mb-6 border-red-500/30 bg-red-500/10 p-4">
+                <p className="text-sm text-red-200">{errorMessage}</p>
+              </Card>
+            )}
+
             <Card className="bg-gradient-to-br from-[#0A0A0A] to-[#1A1A1A] border-[#333333] p-8 mb-6">
               <div className="text-center">
                 <motion.div
@@ -115,34 +160,39 @@ export function CheckIn() {
                 </h2>
                 <p className="text-gray-400 mb-6">
                   {checkedIn
-                    ? "Ótimo trabalho! Você está construindo consistência."
-                    : "Faça check-in agora para marcar a presença de hoje"}
+                    ? 'Otimo trabalho! Voce esta construindo consistencia.'
+                    : 'Faca check-in agora para marcar a presenca de hoje'}
                 </p>
 
                 <Button
                   onClick={handleCheckIn}
-                  disabled={checkedIn}
+                  disabled={checkedIn || saving || loading}
                   className={`w-full h-14 text-lg font-semibold ${
                     checkedIn
                       ? 'bg-[#1A1A1A] text-gray-400 cursor-not-allowed'
                       : 'bg-[#FFD700] hover:bg-[#FFC700] text-black'
                   }`}
                 >
-                  {checkedIn ? 'Check-in Já Realizado Hoje' : 'Fazer Check-in Agora'}
+                  {saving
+                    ? 'Registrando...'
+                    : checkedIn
+                    ? 'Check-in Ja Realizado Hoje'
+                    : 'Fazer Check-in Agora'}
                 </Button>
               </div>
             </Card>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-2 gap-4">
               <Card className="bg-[#0A0A0A] border-[#333333] p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 bg-[#FFD700]/20 rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-[#FFD700]" />
                   </div>
-                  <p className="text-sm text-gray-400">Sequência Atual</p>
+                  <p className="text-sm text-gray-400">Sequencia Atual</p>
                 </div>
-                <p className="text-3xl font-bold text-white">{currentStreak}</p>
+                <p className="text-3xl font-bold text-white">
+                  {loading ? '...' : stats?.streakDays ?? 0}
+                </p>
                 <p className="text-sm text-gray-400">dias</p>
               </Card>
 
@@ -151,15 +201,16 @@ export function CheckIn() {
                   <div className="w-10 h-10 bg-[#FFD700]/20 rounded-lg flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-[#FFD700]" />
                   </div>
-                  <p className="text-sm text-gray-400">Este Mês</p>
+                  <p className="text-sm text-gray-400">Total</p>
                 </div>
-                <p className="text-3xl font-bold text-white">22</p>
+                <p className="text-3xl font-bold text-white">
+                  {loading ? '...' : stats?.checkins ?? 0}
+                </p>
                 <p className="text-sm text-gray-400">check-ins</p>
               </Card>
             </div>
           </motion.div>
 
-          {/* Leaderboard Section */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -169,7 +220,7 @@ export function CheckIn() {
                 <h2 className="text-4xl font-bold text-white mb-2">
                   Ranking <span className="text-[#FFD700]">Mensal</span>
                 </h2>
-                <p className="text-gray-400">Melhores desempenhos do mês</p>
+                <p className="text-gray-400">Melhores desempenhos do mes</p>
               </div>
               <Trophy className="w-12 h-12 text-[#FFD700]" />
             </div>
@@ -188,7 +239,6 @@ export function CheckIn() {
                         : 'bg-[#1A1A1A] hover:bg-[#262626]'
                     }`}
                   >
-                    {/* Rank Badge */}
                     <div
                       className={`w-12 h-12 ${getRankBadgeColor(
                         user.rank
@@ -197,7 +247,6 @@ export function CheckIn() {
                       {getRankIcon(user.rank)}
                     </div>
 
-                    {/* Avatar */}
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-black flex-shrink-0 ${
                         user.rank <= 3 ? 'bg-[#FFD700]' : 'bg-gray-400'
@@ -206,15 +255,13 @@ export function CheckIn() {
                       {user.avatar}
                     </div>
 
-                    {/* User Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white truncate">{user.name}</p>
                       <p className="text-sm text-gray-400">
-                        Sequência de {user.streak} dias
+                        Sequencia de {user.streak} dias
                       </p>
                     </div>
 
-                    {/* Check-ins */}
                     <div className="text-right">
                       <p className="text-2xl font-bold text-[#FFD700]">{user.checkIns}</p>
                       <p className="text-xs text-gray-400">check-ins</p>
@@ -223,10 +270,9 @@ export function CheckIn() {
                 ))}
               </div>
 
-              {/* Motivational Message */}
               <div className="mt-6 p-4 bg-[#FFD700]/10 border border-[#FFD700] rounded-lg">
                 <p className="text-center text-sm text-[#FFD700] font-semibold">
-                  🔥 Continue assim! Você está a apenas 6 check-ins do top 3!
+                  Continue assim! Voce esta a poucos check-ins do top 3.
                 </p>
               </div>
             </Card>
