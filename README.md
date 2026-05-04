@@ -119,11 +119,11 @@ proximos passos :
 - [x] Integrar painel do instrutor
 - [x] Integrar criação de treinos
 - [x] Integrar atribuição de treinos para alunos
-- [ ] Tratar erros da API
-- [ ] Criar feedbacks visuais de carregamento
-- [ ] Criar mensagens de sucesso e erro
-- [ ] Ajustar permissões por perfil: aluno, instrutor e recepcionista
-- [ ] Testar fluxo completo com backend rodando
-- [ ] Ajustar responsividade das telas
-- [ ] Fazer deploy do frontend
-- [ ] Configurar variável de ambiente da API no deploy
+- [x] Tratar erros da API
+- [x] Criar feedbacks visuais de carregamento
+- [x] Criar mensagens de sucesso e erro
+- [x] Ajustar permissões por perfil: aluno, instrutor e recepcionista
+- [x] Testar fluxo completo com backend rodando
+- [x] Ajustar responsividade das telas
+- [x] Fazer deploy do frontend
+- [x] Configurar variável de ambiente da API no deploy
