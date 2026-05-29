@@ -91,7 +91,7 @@ const workouts = await api.get<Workout[]>('/workouts');
 
 ## Status Atual
 
-A interface esta navegavel e usa dados mockados nas telas principais. A camada de API ja esta preparada para conectar o frontend ao backend usando a URL definida no `.env`.
+A interface esta navegavel e usa dados mockados nas telas principais. A camada de API ja esta preparada para conectar o frontend ao backend usando a URL definida no Para usar a aplicação use os seguintes Login : recepcao@blackfit.com | instrutor@blackfit.com | aluno@blackfit.com | Senha : blackfit123; Todos os usurarios usam a mesma senha!  `.env`.
 
 ## Objetivo do Projeto
 
